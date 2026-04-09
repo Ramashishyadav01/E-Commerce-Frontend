@@ -1,4 +1,7 @@
+
 import api from "../../api/api"
+
+import toast from 'react-hot-toast';
 
 export const fetchProducts = (queryString) => async (dispatch) => {
     try {
@@ -23,7 +26,6 @@ export const fetchProducts = (queryString) => async (dispatch) => {
     }
 };
 
-
 export const fetchCategories = () => async (dispatch) => {
     try {
         dispatch({ type: "CATEGORY_LOADER" });
@@ -37,7 +39,7 @@ export const fetchCategories = () => async (dispatch) => {
             totalPages: data.totalPages,
             lastPage: data.lastPage,
         });
-        dispatch({ type: "IS_ERROR" });
+        dispatch({ type: "CATEGORY_SUCCESS" });
     } catch (error) {
         console.log(error);
         dispatch({ 
@@ -47,34 +49,27 @@ export const fetchCategories = () => async (dispatch) => {
     }
 };
 
-
 export const addToCart = (data, qty = 1, toast) => 
     (dispatch, getState) => {
-        // Find the product
         const { products } = getState().products;
         const getProduct = products.find(
             (item) => item.productId === data.productId
         );
 
-        // Check for stocks
         const isQuantityExist = getProduct.quantity >= qty;
 
-        // If in stock -> add
         if (isQuantityExist) {
             dispatch({ type: "ADD_CART", payload: {...data, quantity: qty}});
             toast.success(`${data?.productName} added to the cart`);
             localStorage.setItem("cartItems", JSON.stringify(getState().carts.cart));
         } else {
-            // error
             toast.error("Out of stock");
         }
 };
 
-
 export const increaseCartQuantity = 
     (data, toast, currentQuantity, setCurrentQuantity) =>
     (dispatch, getState) => {
-        // Find the product
         const { products } = getState().products;
         
         const getProduct = products.find(
@@ -95,10 +90,7 @@ export const increaseCartQuantity =
         } else {
             toast.error("Quantity Reached to Limit");
         }
-
     };
-
-
 
 export const decreaseCartQuantity = 
     (data, newQuantity) => (dispatch, getState) => {
@@ -114,8 +106,6 @@ export const removeFromCart =  (data, toast) => (dispatch, getState) => {
     toast.success(`${data.productName} removed from cart`);
     localStorage.setItem("cartItems", JSON.stringify(getState().carts.cart));
 }
-
-
 
 export const authenticateSignInUser 
     = (sendData, toast, reset, navigate, setLoader) => async (dispatch) => {
@@ -135,7 +125,6 @@ export const authenticateSignInUser
         }
 }
 
-
 export const registerNewUser 
     = (sendData, toast, reset, navigate, setLoader) => async (dispatch) => {
         try {
@@ -152,7 +141,6 @@ export const registerNewUser
         }
 };
 
-
 export const logOutUser = (navigate) => (dispatch) => {
     dispatch({ type:"LOG_OUT" });
     localStorage.removeItem("auth");
@@ -161,12 +149,6 @@ export const logOutUser = (navigate) => (dispatch) => {
 
 export const addUpdateUserAddress =
      (sendData, toast, addressId, setOpenAddressModal) => async (dispatch, getState) => {
-    /*
-    const { user } = getState().auth;
-    await api.post(`/addresses`, sendData, {
-          headers: { Authorization: "Bearer " + user.jwtToken },
-        });
-    */
     dispatch({ type:"BUTTON_LOADER" });
     try {
         if (!addressId) {
@@ -185,7 +167,6 @@ export const addUpdateUserAddress =
         setOpenAddressModal(false);
     }
 };
-
 
 export const deleteUserAddress = 
     (toast, addressId, setOpenDeleteModal) => async (dispatch, getState) => {
@@ -216,7 +197,7 @@ export const clearCheckoutAddress = () => {
 export const getUserAddresses = () => async (dispatch, getState) => {
     try {
         dispatch({ type: "IS_FETCHING" });
-        const { data } = await api.get(`/addresses`);
+        const { data } = await api.get(`/user/addresses`);
         dispatch({type: "USER_ADDRESS", payload: data});
         dispatch({ type: "IS_SUCCESS" });
     } catch (error) {
@@ -237,7 +218,6 @@ export const selectUserCheckoutAddress = (address) => {
     }
 };
 
-
 export const addPaymentMethod = (method) => {
     return {
         type: "ADD_PAYMENT_METHOD",
@@ -245,6 +225,18 @@ export const addPaymentMethod = (method) => {
     }
 };
 
+// FIX: Added 'toast' to the parameters so the catch block works
+export const createRazorpayPaymentOrder = (setOrderDetails, toast) => async (dispatch) => {
+    try {
+        dispatch({ type: "IS_FETCHING" });
+        const { data } = await api.post("/order/razorpay-order");
+        setOrderDetails(data);
+        dispatch({ type: "IS_SUCCESS" });
+    } catch (error) {
+        console.log(error);
+        if (toast) toast.error(error?.response?.data?.message || "Failed to initialize Razorpay");
+    }
+};
 
 export const createUserCart = (sendCartItems) => async (dispatch, getState) => {
     try {
@@ -260,11 +252,10 @@ export const createUserCart = (sendCartItems) => async (dispatch, getState) => {
     }
 };
 
-
 export const getUserCart = () => async (dispatch, getState) => {
     try {
         dispatch({ type: "IS_FETCHING" });
-        const { data } = await api.get('/carts/user/cart');
+        const { data } = await api.get('/carts/users/cart');
         
         dispatch({
             type: "GET_USER_CART_PRODUCTS",
@@ -283,24 +274,19 @@ export const getUserCart = () => async (dispatch, getState) => {
     }
 };
 
-
-export const createStripePaymentSecret 
-    = (sendData) => async (dispatch, getState) => {
-        try {
-            dispatch({ type: "IS_FETCHING" });
-            const { data } = await api.post("/order/stripe-client-secret", sendData);
-            dispatch({ type: "CLIENT_SECRET", payload: data });
-              localStorage.setItem("client-secret", JSON.stringify(data));
-              dispatch({ type: "IS_SUCCESS" });
-        } catch (error) {
-            console.log(error);
-            toast.error(error?.response?.data?.message || "Failed to create client secret");
-        }
+// FIX: Combined duplicate functions and added 'toast' parameter
+export const createStripePaymentSecret = (sendData, toast) => async (dispatch, getState) => {
+    try {
+        dispatch({ type: "IS_FETCHING" });
+        const { data } = await await api.post("/order/stripe-client-secret", sendData);
+        dispatch({ type: "CLIENT_SECRET", payload: data });
+        localStorage.setItem("client-secret", JSON.stringify(data));
+        dispatch({ type: "IS_SUCCESS" });
+    } catch (error) {
+        console.log(error);
+        if (toast) toast.error(error?.response?.data?.message || "Failed to create client secret");
+    }
 };
-
-
-
-
 
 export const stripePaymentConfirmation 
     = (sendData, setErrorMesssage, setLoadng, toast) => async (dispatch, getState) => {
@@ -362,8 +348,6 @@ export const getOrdersForDashboard = (queryString, isAdmin) => async (dispatch) 
     }
 };
 
-
-
 export const updateOrderStatusFromDashboard =
      (orderId, orderStatus, toast, setLoader, isAdmin) => async (dispatch, getState) => {
     try {
@@ -379,7 +363,6 @@ export const updateOrderStatusFromDashboard =
         setLoader(false)
     }
 };
-
 
 export const dashboardProductsAction = (queryString, isAdmin) => async (dispatch) => {
     try {
@@ -405,7 +388,6 @@ export const dashboardProductsAction = (queryString, isAdmin) => async (dispatch
     }
 };
 
-
 export const updateProductFromDashboard = 
     (sendData, toast, reset, setLoader, setOpen, isAdmin) => async (dispatch) => {
     try {
@@ -423,8 +405,6 @@ export const updateProductFromDashboard =
     }
 };
 
-
-
 export const addNewProductFromDashboard = 
     (sendData, toast, reset, setLoader, setOpen, isAdmin) => async(dispatch, getState) => {
         try {
@@ -437,9 +417,9 @@ export const addNewProductFromDashboard =
             reset();
             setOpen(false);
             await dispatch(dashboardProductsAction());
-        } catch (error) {
-            console.error(err);
-            toast.error(err?.response?.data?.description || "Product creation failed");
+        } catch (error) { // FIX: Changed 'err' to 'error'
+            console.error(error);
+            toast.error(error?.response?.data?.description || "Product creation failed");
         } finally {
             setLoader(false);
         }
@@ -462,7 +442,6 @@ export const deleteProduct =
         )
     }
 };
-
 
 export const updateProductImageFromDashboard = 
     (formData, productId, toast, setLoader, setOpen, isAdmin) => async (dispatch) => {
@@ -576,7 +555,6 @@ export const deleteCategoryDashboardAction =
       });
     }
   };
-
 
   export const getAllSellersDashboard =
   (queryString) => async (dispatch, getState) => {

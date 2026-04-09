@@ -9,6 +9,7 @@ import ErrorPage from '../shared/ErrorPage';
 import PaymentMethod from './PaymentMethod';
 import OrderSummary from './OrderSummary';
 import StripePayment from './StripePayment';
+import RazorpayPayment from './RazorpayPayment';
 import PaypalPayment from './PaypalPayment';
 
 
@@ -77,6 +78,7 @@ const Checkout = () => {
                 {activeStep === 3 && 
                     <>
                         {paymentMethod === "Stripe" && <StripePayment />}
+                             {paymentMethod === 'Razorpay' && <RazorpayPayment />}
                             {paymentMethod === "Paypal" && <PaypalPayment />}
                             {/* --- ADD THIS LINE --- */}
                             

@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom'
 import { stripePaymentConfirmation } from '../../store/actions';
 import toast from 'react-hot-toast';
+import Skeleton from '../shared/Skeleton'; 
 
 const PaymentConfirmation = () => {
     const location = useLocation();

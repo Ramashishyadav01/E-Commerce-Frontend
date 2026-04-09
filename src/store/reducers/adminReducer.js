@@ -1,5 +1,5 @@
 const initialState = {
-    analytics: {},
+  analytics: { productCount: 0, totalRevenue: 0, totalOrders: 0 },
 };
 
 export const adminReducer = (state = initialState, action) => {
