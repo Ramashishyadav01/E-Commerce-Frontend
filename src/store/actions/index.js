@@ -3,7 +3,7 @@ import api from "../../api/api"
 
 import toast from 'react-hot-toast';
 
-export const fetchProducts = (queryString) => async (dispatch) => {
+export const fetchProducts = (queryString = "") => async (dispatch) => {
     try {
         dispatch({ type: "IS_FETCHING" });
         const { data } = await api.get(`/public/products?${queryString}`);
@@ -496,8 +496,9 @@ export const createCategoryDashboardAction =
       await dispatch(getAllCategoriesDashboard());
     } catch (err) {
       console.log(err);
+      // FIX: Changed this so it shows the actual 'message' from the backend
       toast.error(
-        err?.response?.data?.categoryName || "Failed to create new category"
+        err?.response?.data?.message || "Failed to create new category"
       );
 
       dispatch({
